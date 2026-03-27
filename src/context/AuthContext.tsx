@@ -2,7 +2,6 @@ import { getCurrentUser } from "@/lib/appwrite/api";
 import { type IUser, type IContextType } from "@/types";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { set } from "zod";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const INITIAL_USER = {
@@ -69,7 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       checkAuthUser();
     }
-  }, []);
+  }, [isAuthenticated, navigate]);
 
   const value = {
     user,

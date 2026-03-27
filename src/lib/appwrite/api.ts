@@ -56,7 +56,7 @@ export async function saveUserToDB(user: {
         username: user.username,
       },
     );
-    console.log("User data saved to DB:", newUser);
+
     return newUser;
   } catch (error) {
     console.error("Error saving user data to DB:", error);
@@ -66,8 +66,8 @@ export async function saveUserToDB(user: {
 
 export async function deleteExistingSession() {
   try {
-    await AccountService.deleteSession("current");
-    console.log("Existing session deleted");
+    const session = await AccountService.deleteSession("current");
+    return session;
   } catch (error) {
     // If no session exists, that's fine
     console.log("No existing session to delete");
@@ -78,7 +78,6 @@ export async function deleteExistingSession() {
 export async function signInAccount(user: { email: string; password: string }) {
   try {
     // Delete any existing session first to avoid "session already exists" error
-    await deleteExistingSession();
 
     const session = await AccountService.createEmailPasswordSession(
       user.email,
@@ -104,14 +103,19 @@ export async function getCurrentUser() {
 
     if (!currentUser?.documents?.[0]) return null;
 
-    console.log(
-      "Current user data retrieved from DB:",
-      currentUser.documents[0],
-    );
-
     return currentUser.documents[0];
   } catch (error) {
     console.error("Error getting current user:", error);
     return null;
+  }
+}
+
+export async function signOutAccount() {
+  try {
+    const session = await deleteExistingSession();
+    return session;
+  } catch (error) {
+    console.error("Error signing out:", error);
+    throw error;
   }
 }
