@@ -1,6 +1,8 @@
 import { getCurrentUser } from "@/lib/appwrite/api";
 import { type IUser, type IContextType } from "@/types";
 import { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { set } from "zod";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const INITIAL_USER = {
@@ -25,11 +27,13 @@ const AuthContext = createContext<IContextType>(INITIAL_STATE);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<IUser>(INITIAL_USER);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   const checkAuthUser = async () => {
     try {
+      setIsLoading(true);
       const currentAccount = await getCurrentUser();
 
       if (currentAccount) {
@@ -60,12 +64,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const cookieFallback = localStorage.getItem("cookieFallback");
 
-    // If cookieFallback exists and is not empty, try to verify the session
-    if (cookieFallback && cookieFallback !== "[]") {
-      checkAuthUser();
+    if (cookieFallback === "[]" || cookieFallback === null) {
+      navigate("/sign-in");
     } else {
-      // No valid session, user is not logged in
-      setIsLoading(false);
+      checkAuthUser();
     }
   }, []);
 

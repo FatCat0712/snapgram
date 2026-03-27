@@ -64,8 +64,22 @@ export async function saveUserToDB(user: {
   }
 }
 
+export async function deleteExistingSession() {
+  try {
+    await AccountService.deleteSession("current");
+    console.log("Existing session deleted");
+  } catch (error) {
+    // If no session exists, that's fine
+    console.log("No existing session to delete");
+    throw error;
+  }
+}
+
 export async function signInAccount(user: { email: string; password: string }) {
   try {
+    // Delete any existing session first to avoid "session already exists" error
+    await deleteExistingSession();
+
     const session = await AccountService.createEmailPasswordSession(
       user.email,
       user.password,
