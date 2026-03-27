@@ -16,8 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/shared/Loader";
 import { Link } from "react-router-dom";
+import { createUserAccount } from "@/lib/appwrite/api";
+import { useToast } from "./hooks/use-toast";
 
 const SignupForm = () => {
+  const { toast } = useToast();
   const isLoading = false;
 
   const form = useForm<z.infer<typeof SignupValidation>>({
@@ -25,7 +28,16 @@ const SignupForm = () => {
     defaultValues: { name: "", username: "", email: "", password: "" },
   });
 
-  
+  async function onSubmit(values: z.infer<typeof SignupValidation>) {
+    //  create the user
+    const newUser = await createUserAccount(values);
+
+    if (!newUser) {
+      return toast({ title: " Sign up failed. Please try again." });
+    }
+
+    const session = await signInAccount()
+  }
 
   return (
     <Form {...form}>
@@ -39,7 +51,10 @@ const SignupForm = () => {
           To use snapgram, Please enter your details
         </p>
 
-        <form className="flex flex-col gap-5 w-full mt-4">
+        <form
+          className="flex flex-col gap-5 w-full mt-4"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
           <FormField
             control={form.control}
             name="name"
