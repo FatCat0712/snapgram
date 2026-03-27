@@ -14,8 +14,8 @@ export const appWriteConfig = {
 export const client = new Client();
 
 client
-  .setProject(appWriteConfig.projectId)
-  .setEndpoint(appWriteConfig.endpoint);
+  .setEndpoint(appWriteConfig.endpoint)
+  .setProject(appWriteConfig.projectId);
 
 export const AccountService = new Account(client);
 export const DatabaseService = new Databases(client);

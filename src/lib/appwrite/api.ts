@@ -1,6 +1,11 @@
 import type { INewUser } from "@/types";
-import { AccountService, AvatarsService, DatabaseService } from "./config";
-import { ID } from "appwrite";
+import {
+  AccountService,
+  AvatarsService,
+  DatabaseService,
+  appWriteConfig,
+} from "./config";
+import { ID, Query } from "appwrite";
 
 export async function createUserAccount(user: INewUser) {
   try {
@@ -27,7 +32,7 @@ export async function createUserAccount(user: INewUser) {
     return newUser;
   } catch (error) {
     console.error("Error creating user account:", error);
-    return error;
+    throw error;
   }
 }
 
@@ -40,18 +45,59 @@ export async function saveUserToDB(user: {
 }) {
   try {
     const newUser = await DatabaseService.createDocument(
-      "default",
-      "users",
+      appWriteConfig.databaseId,
+      appWriteConfig.userCollectionId,
       ID.unique(),
       {
         accountId: user.accountId,
         name: user.name,
-      }
+        email: user.email,
+        imageUrl: user.imageUrl,
+        username: user.username,
+      },
     );
     console.log("User data saved to DB:", newUser);
     return newUser;
   } catch (error) {
     console.error("Error saving user data to DB:", error);
-    return error;
+    throw error;
+  }
+}
+
+export async function signInAccount(user: { email: string; password: string }) {
+  try {
+    const session = await AccountService.createEmailPasswordSession(
+      user.email,
+      user.password,
+    );
+    return session;
+  } catch (error) {
+    console.error("Error signing in:", error);
+    throw error;
+  }
+}
+
+export async function getCurrentUser() {
+  try {
+    const currentAccount = await AccountService.get();
+    if (!currentAccount) return null;
+
+    const currentUser = await DatabaseService.listDocuments(
+      appWriteConfig.databaseId,
+      appWriteConfig.userCollectionId,
+      [Query.equal("accountId", [currentAccount.$id])],
+    );
+
+    if (!currentUser?.documents?.[0]) return null;
+
+    console.log(
+      "Current user data retrieved from DB:",
+      currentUser.documents[0],
+    );
+
+    return currentUser.documents[0];
+  } catch (error) {
+    console.error("Error getting current user:", error);
+    return null;
   }
 }
