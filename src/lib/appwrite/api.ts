@@ -126,12 +126,20 @@ export async function getCurrentUser() {
     const currentUser = await DatabaseService.listDocuments(
       appWriteConfig.databaseId,
       appWriteConfig.userCollectionId,
-      [Query.equal("accountId", [currentAccount.$id])],
+      [
+        Query.equal("accountId", [currentAccount.$id]),
+        Query.select(["*", "saves.*", "saves.post.*"]),
+      ],
     );
 
     if (!currentUser?.documents?.[0]) return null;
 
-    return currentUser.documents[0];
+    return {
+      ...currentUser.documents[0],
+      savedPosts: Array.isArray(currentUser.documents[0].saves)
+        ? currentUser.documents[0].saves
+        : [],
+    };
   } catch (error) {
     console.error("Error getting current user:", error);
     return null;
@@ -281,7 +289,7 @@ export async function savePost(postId: string, userId: string) {
     const updatedPost = await DatabaseService.createDocument(
       appWriteConfig.databaseId,
       appWriteConfig.savesCollectionId,
-      postId,
+      ID.unique(),
       {
         user: userId,
         post: postId,
