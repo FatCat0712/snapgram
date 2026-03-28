@@ -6,7 +6,23 @@ import {
   StorageService,
   appWriteConfig,
 } from "./config";
-import { ID, ImageGravity, Query } from "appwrite";
+import { ID, Query } from "appwrite";
+
+function getFileView(fileId: string) {
+  try {
+    const fileUrl = StorageService.getFileView(
+      appWriteConfig.storageBucketId,
+      fileId,
+    );
+
+    if (!fileUrl) throw Error;
+
+    return fileUrl;
+  } catch (error) {
+    console.error("Error getting file view:", error);
+    throw error;
+  }
+}
 
 export async function createUserAccount(user: INewUser) {
   try {
@@ -129,9 +145,7 @@ export async function createPost(post: INewPost) {
     if (!uploadedFile) throw Error;
 
     // Get file url
-    const fileUrl = await getFileReview(uploadedFile.$id);
-
-    console.log(typeof fileUrl, fileUrl);
+    const fileUrl = getFileView(uploadedFile.$id);
 
     if (!fileUrl) {
       await deleteFile(uploadedFile.$id);
@@ -149,7 +163,7 @@ export async function createPost(post: INewPost) {
       {
         creator: post.userId,
         caption: post.caption,
-        imageUrl: fileUrl,
+        imageUrl: fileUrl.toString(),
         imageId: uploadedFile.$id,
         location: post.location,
         tags,
@@ -182,26 +196,6 @@ export async function uploadFile(file: File) {
   }
 }
 
-export async function getFileReview(filedId: string) {
-  try {
-    const fileUrl = StorageService.getFilePreview(
-      appWriteConfig.storageBucketId,
-      filedId,
-      2000,
-      2000,
-      ImageGravity.Top,
-      100,
-    );
-
-    if (!fileUrl) throw Error;
-
-    return fileUrl;
-  } catch (error) {
-    console.error("Error getting file preview:", error);
-    throw error;
-  }
-}
-
 export async function deleteFile(fieldId: string) {
   try {
     await StorageService.deleteFile(appWriteConfig.storageBucketId, fieldId);
@@ -220,7 +214,16 @@ export async function getRecentPosts() {
       [Query.orderDesc("$createdAt"), Query.limit(20)],
     );
 
-    return posts.documents;
+    // Always expose a non-transform storage URL so plans without image
+    // transformations can still render feed images.
+    return posts.documents.map((post) => {
+      if (!post.imageId) return post;
+
+      return {
+        ...post,
+        imageUrl: getFileView(post.imageId).toString(),
+      };
+    });
   } catch (error) {
     console.log(error);
   }
