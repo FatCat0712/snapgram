@@ -3,6 +3,7 @@ import { formatDate } from "@/lib/utils";
 import type { Models } from "appwrite";
 
 import { Link } from "react-router";
+import PostStats from "./PostStats";
 
 type postCardProps = {
   post: Models.Document & {
@@ -71,6 +72,7 @@ const PostCard = ({ post }: postCardProps) => {
           className="post-card_img"
         />
       </Link>
+      <PostStats post={post} userId={user.id} />
     </div>
   );
 };

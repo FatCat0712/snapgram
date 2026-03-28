@@ -35,7 +35,6 @@ const PostForm = ({ post }: PostFormProps) => {
   const { user } = useUserContext();
   const { toast } = useToast();
 
-  
   const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof PostValidation>>({

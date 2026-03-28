@@ -24,6 +24,17 @@ function getFileView(fileId: string) {
   }
 }
 
+export function getRelationshipId(value: unknown): string | null {
+  if (typeof value === "string") return value;
+
+  if (value && typeof value === "object" && "$id" in value) {
+    const id = (value as { $id: unknown }).$id;
+    return typeof id === "string" ? id : null;
+  }
+
+  return null;
+}
+
 export async function createUserAccount(user: INewUser) {
   try {
     const newAccount = await AccountService.create({
@@ -167,6 +178,7 @@ export async function createPost(post: INewPost) {
         imageId: uploadedFile.$id,
         location: post.location,
         tags,
+        likes: [],
       },
     );
 
@@ -211,20 +223,93 @@ export async function getRecentPosts() {
     const posts = await DatabaseService.listDocuments(
       appWriteConfig.databaseId,
       appWriteConfig.postCollectionId,
-      [Query.orderDesc("$createdAt"), Query.limit(20)],
+      [
+        Query.orderDesc("$createdAt"),
+        Query.limit(20),
+        Query.select(["*", "likes.*"]),
+      ],
     );
 
     // Always expose a non-transform storage URL so plans without image
     // transformations can still render feed images.
     return posts.documents.map((post) => {
-      if (!post.imageId) return post;
+      const normalizedLikes = Array.isArray(post.likes)
+        ? post.likes
+            .map(getRelationshipId)
+            .filter((id): id is string => id !== null)
+        : [];
+
+      const normalizedPost = {
+        ...post,
+        likes: normalizedLikes,
+      };
+
+      if (!post.imageId) return normalizedPost;
 
       return {
-        ...post,
+        ...normalizedPost,
         imageUrl: getFileView(post.imageId).toString(),
       };
     });
   } catch (error) {
     console.log(error);
+  }
+}
+
+export async function likePost(postId: string, likesArray: string[]) {
+  try {
+    const updatedPost = await DatabaseService.updateDocument(
+      appWriteConfig.databaseId,
+      appWriteConfig.postCollectionId,
+      postId,
+      {
+        likes: likesArray,
+      },
+    );
+
+    if (!updatedPost) throw Error;
+
+    return updatedPost;
+  } catch (error) {
+    console.error("Error liking post:", error);
+    throw error;
+  }
+}
+
+export async function savePost(postId: string, userId: string) {
+  try {
+    const updatedPost = await DatabaseService.createDocument(
+      appWriteConfig.databaseId,
+      appWriteConfig.savesCollectionId,
+      postId,
+      {
+        user: userId,
+        post: postId,
+      },
+    );
+
+    if (!updatedPost) throw Error;
+
+    return updatedPost;
+  } catch (error) {
+    console.error("Error saving post:", error);
+    throw error;
+  }
+}
+
+export async function deleteSavedPost(savedRecordId: string) {
+  try {
+    const status = await DatabaseService.deleteDocument(
+      appWriteConfig.databaseId,
+      appWriteConfig.savesCollectionId,
+      savedRecordId,
+    );
+
+    if (!status) throw Error;
+
+    return { status: "ok" };
+  } catch (error) {
+    console.error("Error deleting saved post:", error);
+    throw error;
   }
 }
