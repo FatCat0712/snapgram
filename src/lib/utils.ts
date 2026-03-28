@@ -8,8 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 export function formatDate(dateString: string) {
   const currentDate = new Date();
   const date = new Date(dateString);
-  const timeDifference = Math.floor(
-    (currentDate.getTime() - date.getTime()) / 1000,
+  const timeDifference = Math.abs(
+    Math.floor((currentDate.getTime() - date.getTime()) / 1000),
   );
 
   if (timeDifference < 60) {

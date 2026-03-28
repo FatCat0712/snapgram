@@ -34,10 +34,11 @@ export type IUpdatePost = {
   postId: string;
   caption: string;
   imageId: string;
-  imageUrl: URL;
+  imageUrl: URL | string;
   file: File[];
   location?: string;
   tags?: string;
+  likes?: string[];
 };
 
 export type IUser = {
