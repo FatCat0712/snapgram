@@ -1,15 +1,13 @@
 import { useUserContext } from "@/context/AuthContext";
 import { useSignOutAccount } from "@/lib/react-query/queriesAndMutations";
-import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
-import { useEffect } from "react";
 import { sidebarLinks } from "@/constants";
 import type { INavLink } from "@/types";
 
 const LeftSidebar = () => {
   const { pathname } = useLocation();
-  const { mutate: signOut, isSuccess } = useSignOutAccount();
-  const navigate = useNavigate();
+  const { mutate: signOut } = useSignOutAccount();
   const { user, setIsAuthenticated } = useUserContext();
   return (
     <nav className="leftsidebar">
@@ -62,6 +60,7 @@ const LeftSidebar = () => {
         className="shad-button_ghost"
         onClick={() => {
           signOut();
+          localStorage.removeItem("cookieFallback");
           setIsAuthenticated(false);
         }}
       >

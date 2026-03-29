@@ -1,5 +1,4 @@
 import type { Models } from "appwrite";
-import React from "react";
 import Loader from "./Loader";
 import GridPostList from "./GridPostList";
 

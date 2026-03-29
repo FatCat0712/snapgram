@@ -1,4 +1,14 @@
 import type { INewPost, INewUser, IUpdatePost } from "@/types";
+
+type AppwriteUserDoc = {
+  $id: string;
+  name: string;
+  username: string;
+  email: string;
+  imageUrl: string;
+  bio: string;
+  savedPosts: unknown[];
+};
 import {
   AccountService,
   AvatarsService,
@@ -118,7 +128,7 @@ export async function signInAccount(user: { email: string; password: string }) {
   }
 }
 
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<AppwriteUserDoc | null> {
   try {
     const currentAccount = await AccountService.get();
     if (!currentAccount) return null;
@@ -139,7 +149,7 @@ export async function getCurrentUser() {
       savedPosts: Array.isArray(currentUser.documents[0].saves)
         ? currentUser.documents[0].saves
         : [],
-    };
+    } as unknown as AppwriteUserDoc;
   } catch (error) {
     console.error("Error getting current user:", error);
     return null;
