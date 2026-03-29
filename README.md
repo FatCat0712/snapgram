@@ -1,73 +1,128 @@
-# React + TypeScript + Vite
+# Snapgram
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A social media web app built with React + TypeScript, powered by Appwrite for authentication, database, and file storage.
 
-Currently, two official plugins are available:
+## What Is Implemented
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- User authentication (sign up, sign in, sign out)
+- Protected and public route layouts
+- Create, edit, delete posts with image upload
+- Like and save/unsave posts
+- Infinite-scroll style post exploration
+- Search posts by caption
+- User discovery (all users and top creators)
+- Profile pages and profile update flow
+- Responsive UI with desktop sidebar and mobile bottombar
+- Toast-based feedback and form validation
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19
+- TypeScript
+- Vite
+- React Router
+- TanStack Query (React Query)
+- Appwrite SDK
+- Tailwind CSS
+- shadcn/ui primitives
+- React Hook Form + Zod
 
-## Expanding the ESLint configuration
+## App Routes
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Public
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- `/sign-in`
+- `/sign-up`
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Private
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- `/` (Home)
+- `/explore`
+- `/saved`
+- `/all-users`
+- `/create-post`
+- `/update-post/:id`
+- `/post/:id`
+- `/profile/:id/*`
+- `/update-profile/:id`
+
+## Project Structure
+
+```txt
+src/
+  _auth/                 # auth layout + auth forms
+  _root/                 # main app layout + private pages
+  components/
+    forms/               # feature forms (post form)
+    shared/              # reusable app components
+    ui/                  # UI primitives
+  context/               # auth context provider
+  lib/
+    appwrite/            # Appwrite config + API functions
+    react-query/         # query hooks + keys + provider
+    validation/          # Zod schemas
+  hooks/                 # custom hooks
+  constants/             # navigation and shared constants
+  types/                 # app-wide TypeScript types
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Create a `.env` file in the project root:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_APPWRITE_ENDPOINT=
+VITE_APPWRITE_PROJECT_ID=
+VITE_APPWRITE_PROJECT_NAME=
+VITE_APPWRITE_DATABASE_ID=
+VITE_APPWRITE_STORAGE_BUCKET_ID=
+VITE_APPWRITE_SAVES_COLLECTION_ID=
+VITE_APPWRITE_POST_COLLECTION_ID=
+VITE_APPWRITE_USER_COLLECTION_ID=
 ```
+
+These variables are consumed in `src/lib/appwrite/config.ts`.
+
+## Getting Started
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure Appwrite
+
+- Create an Appwrite project
+- Create one database and required collections:
+  - users
+  - posts
+  - saves
+- Create one storage bucket for post images
+- Set collection and bucket permissions for your auth model
+- Copy IDs into `.env`
+
+### 3. Run development server
+
+```bash
+npm run dev
+```
+
+Open the local URL printed by Vite in your browser.
+
+## Scripts
+
+- `npm run dev` - start development server
+- `npm run build` - type-check and build production assets
+- `npm run preview` - preview production build locally
+- `npm run lint` - run ESLint
+
+## Notes
+
+- Data fetching and cache invalidation are handled through TanStack Query hooks in `src/lib/react-query/queriesAndMutations.ts`.
+- Auth state is managed in `src/context/AuthContext.tsx`.
+- Appwrite interaction logic is centralized in `src/lib/appwrite/api.ts`.
+
+## Status
+
+This project is in active development and already includes the core social features end to end.
