@@ -52,6 +52,8 @@ const SignupForm = () => {
       return toast({ title: " Sign in failed. Please try again." });
     }
 
+    localStorage.removeItem("cookieFallback");
+
     // Session is created, navigate to home and let the AuthProvider check auth on mount
     form.reset();
     navigate("/");

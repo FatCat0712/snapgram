@@ -38,9 +38,11 @@ const SigninForm = () => {
       password: values.password,
     });
 
-    if (!session) {
+    if (session === null) {
       return toast({ title: " Sign in failed. Please try again." });
     }
+
+    localStorage.removeItem("cookieFallback");
 
     const isLoggedIn = await checkAuthUser();
 

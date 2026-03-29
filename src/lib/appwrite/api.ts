@@ -18,6 +18,25 @@ import {
 } from "./config";
 import { ID, Query } from "appwrite";
 
+function isMissingAccountScopeError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const maybeError = error as {
+    code?: unknown;
+    type?: unknown;
+    message?: unknown;
+  };
+
+  const isUnauthorized = maybeError.code === 401;
+  const isScopeType = maybeError.type === "general_unauthorized_scope";
+  const hasAccountScopeMessage =
+    typeof maybeError.message === "string" &&
+    maybeError.message.includes("missing scopes") &&
+    maybeError.message.includes("account");
+
+  return isUnauthorized && (isScopeType || hasAccountScopeMessage);
+}
+
 function getFileView(fileId: string) {
   try {
     const fileUrl = StorageService.getFileView(
@@ -106,10 +125,10 @@ export async function deleteExistingSession() {
   try {
     const session = await AccountService.deleteSession("current");
     return session;
-  } catch (error) {
+  } catch {
     // If no session exists, that's fine
     console.log("No existing session to delete");
-    throw error;
+    return null;
   }
 }
 
@@ -131,6 +150,7 @@ export async function signInAccount(user: { email: string; password: string }) {
 export async function getCurrentUser(): Promise<AppwriteUserDoc | null> {
   try {
     const currentAccount = await AccountService.get();
+
     if (!currentAccount) return null;
 
     const currentUser = await DatabaseService.listDocuments(
@@ -151,6 +171,11 @@ export async function getCurrentUser(): Promise<AppwriteUserDoc | null> {
         : [],
     } as unknown as AppwriteUserDoc;
   } catch (error) {
+    // Expected during app bootstrap when no active session exists yet.
+    if (isMissingAccountScopeError(error)) {
+      return null;
+    }
+
     console.error("Error getting current user:", error);
     return null;
   }
@@ -468,6 +493,49 @@ export async function searchPosts(searchTerm: string) {
     return posts;
   } catch (error) {
     console.error("Error searching posts:", error);
+    throw error;
+  }
+}
+
+type TopCreator = {
+  $id: string;
+  name: string;
+  username: string;
+  imageUrl: string;
+  bio: string;
+  postCount: number;
+};
+
+export async function getTopCreators(limit = 10): Promise<TopCreator[]> {
+  try {
+    // 1. Fetch all users (up to 100)
+    const users = await DatabaseService.listDocuments(
+      appWriteConfig.databaseId,
+      appWriteConfig.userCollectionId,
+      [
+        Query.limit(100),
+        Query.select(["$id", "name", "username", "imageUrl", "bio"]),
+      ],
+    );
+
+    // 2. For each user, get their post count from the posts collection
+    const creatorsWithCount = await Promise.all(
+      users.documents.map(async (user) => {
+        const posts = await DatabaseService.listDocuments(
+          appWriteConfig.databaseId,
+          appWriteConfig.postCollectionId,
+          [Query.equal("creator", user.$id), Query.limit(1)],
+        );
+        return { ...(user as unknown as TopCreator), postCount: posts.total };
+      }),
+    );
+
+    // 3. Sort by post count descending and return top N
+    return creatorsWithCount
+      .sort((a, b) => b.postCount - a.postCount)
+      .slice(0, limit);
+  } catch (error) {
+    console.error("Error getting top creators:", error);
     throw error;
   }
 }

@@ -17,4 +17,7 @@ export const QUERY_KEYS = {
 
   //  SEARCH KEYS
   SEARCH_POSTS: "getSearchPosts",
+
+  // CREATOR KEYS
+  GET_TOP_CREATORS: "getTopCreators",
 } as const;

@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/appwrite/api";
 import { type IUser, type IContextType } from "@/types";
 import { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const INITIAL_USER = {
@@ -29,6 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const checkAuthUser = async () => {
     try {
@@ -61,14 +62,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    const cookieFallback = localStorage.getItem("cookieFallback");
+    const syncAuthState = async () => {
+      const cookieFallback = localStorage.getItem("cookieFallback");
 
-    if (cookieFallback === "[]" || cookieFallback === null) {
-      navigate("/sign-in");
-    } else {
-      checkAuthUser();
-    }
-  }, [isAuthenticated, navigate]);
+      // Skip account check when local state explicitly marks user as signed out.
+      if (cookieFallback === "[]") {
+        setUser(INITIAL_USER);
+        setIsAuthenticated(false);
+
+        if (pathname !== "/sign-in" && pathname !== "/sign-up") {
+          navigate("/sign-in");
+        }
+        return;
+      }
+
+      await checkAuthUser();
+    };
+
+    syncAuthState();
+  }, [navigate, pathname]);
 
   const value = {
     user,

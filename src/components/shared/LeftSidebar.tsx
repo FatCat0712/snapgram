@@ -1,14 +1,34 @@
 import { useUserContext } from "@/context/AuthContext";
 import { useSignOutAccount } from "@/lib/react-query/queriesAndMutations";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { sidebarLinks } from "@/constants";
 import type { INavLink } from "@/types";
 
 const LeftSidebar = () => {
   const { pathname } = useLocation();
-  const { mutate: signOut } = useSignOutAccount();
-  const { user, setIsAuthenticated } = useUserContext();
+  const { mutateAsync: signOut } = useSignOutAccount();
+  const { user, setIsAuthenticated, setUser } = useUserContext();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } finally {
+      localStorage.setItem("cookieFallback", "[]");
+      setUser({
+        id: "",
+        name: "",
+        username: "",
+        email: "",
+        imageUrl: "",
+        bio: "",
+      });
+      setIsAuthenticated(false);
+      navigate("/sign-in");
+    }
+  };
+
   return (
     <nav className="leftsidebar">
       <div className="flex flex-col gap-11">
@@ -58,11 +78,7 @@ const LeftSidebar = () => {
       <Button
         variant="ghost"
         className="shad-button_ghost"
-        onClick={() => {
-          signOut();
-          localStorage.removeItem("cookieFallback");
-          setIsAuthenticated(false);
-        }}
+        onClick={handleSignOut}
       >
         <img
           src="/assets/icons/logout.svg"

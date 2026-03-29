@@ -19,6 +19,7 @@ import {
   deletePost,
   getInfinitePosts,
   searchPosts,
+  getTopCreators,
 } from "../appwrite/api";
 import type { INewPost, INewUser, IUpdatePost } from "@/types";
 import { QUERY_KEYS } from "./queryKeys";
@@ -193,5 +194,12 @@ export const useSearchPosts = (searchTerm: string) => {
     queryKey: [QUERY_KEYS.SEARCH_POSTS, searchTerm],
     queryFn: () => searchPosts(searchTerm),
     enabled: !!searchTerm,
+  });
+};
+
+export const useGetTopCreators = (limit = 10) => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.GET_TOP_CREATORS, limit],
+    queryFn: () => getTopCreators(limit),
   });
 };
