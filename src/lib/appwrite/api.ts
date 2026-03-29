@@ -328,6 +328,7 @@ export async function getPostById(postId: string) {
       appWriteConfig.databaseId,
       appWriteConfig.postCollectionId,
       postId,
+      [Query.select(["*", "creator.*"])],
     );
 
     return post;
@@ -410,6 +411,53 @@ export async function deletePost(postId: string, imageId: string) {
     return { status: "ok" };
   } catch (error) {
     console.error("Error deleting post:", error);
+    throw error;
+  }
+}
+
+export async function getInfinitePosts({ pageParam }: { pageParam: number }) {
+  const queries: Parameters<typeof DatabaseService.listDocuments>[2] = [
+    Query.select(["*", "creator.*"]),
+    Query.select(["*", "likes.*"]),
+    Query.orderDesc("$updatedAt"),
+    Query.limit(10),
+  ];
+
+  if (pageParam) {
+    queries.push(Query.cursorAfter(pageParam.toString()));
+  }
+
+  try {
+    const posts = await DatabaseService.listDocuments(
+      appWriteConfig.databaseId,
+      appWriteConfig.postCollectionId,
+      queries,
+    );
+
+    return posts;
+  } catch (error) {
+    console.error("Error getting posts:", error);
+    throw error;
+  }
+}
+
+export async function searchPosts(searchTerm: string) {
+  try {
+    const posts = await DatabaseService.listDocuments(
+      appWriteConfig.databaseId,
+      appWriteConfig.postCollectionId,
+      [
+        Query.search("caption", searchTerm),
+        Query.orderDesc("$updatedAt"),
+        Query.limit(20),
+      ],
+    );
+
+    if (!posts) throw Error;
+
+    return posts;
+  } catch (error) {
+    console.error("Error searching posts:", error);
     throw error;
   }
 }
